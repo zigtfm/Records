@@ -88,8 +88,6 @@ end
 --[[ --]]
 
 function saveLeaderboard()
-	local length = 0
-
 	if (not leaderboard) or (leaderboard == {}) then
 		log({"<r>Can't save</r> : Leaderboard is empty!"})
 		return
@@ -98,17 +96,9 @@ function saveLeaderboard()
 		return
 	end
 
-	local output = {"@"..mapCode..";"}
+	local output = "@"..mapCode..";"..leaderboard[1][1]..leaderboard[1][2]..";"
 
-	for i, v in next, leaderboard do
-		output[i+1] = v[1]..v[2]..";"
-
-		if i == 5 then
-			break
-		end
-	end
-
-	fileToSave = table.concat(output, "")
+	fileToSave = output
 	isSavingFile = true
 
 	loadLeaderboard()
@@ -133,15 +123,14 @@ function loadMapLeaderboard()
 
 	for i, v in next, mapsData[mapCode] do
 		leaderboardAdd(v[1], v[2])
-		tfm.exec.chatMessage(tostring(v[1]).." "..tostring(v[2]))
+		tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..tostring(v[1]).." "..formatTime(tostring(v[2])))
 	end
 	
 	updateUi()
 end
 
 
--- @mapcode;playername#tagtime;playerName#tagtime;playerName#tagtime; ...
-
+-- @mapcode;playername#tagtime;
 
 function eventFileLoaded(fileNumber, fileData)
 	--log({"<vp>File Loaded</vp>", "<v>"..fileNumber.."</v> : "..fileData})
@@ -151,27 +140,25 @@ function eventFileLoaded(fileNumber, fileData)
 
 	-- for each mapCode
 	for s in fileData:gmatch('[^@]+') do
-		local map
-		local isMapCode = true
-		local playerCount = 0
-
+		local values, c = {}, 1
 		-- for each mapCode string divied by ';'
 		for data in s:gmatch('(.-);') do
-			if isMapCode then
-				-- first string is mapCode
-				map = tonumber(data)
-				mapsData[map] = {}
-				mapsDataRaw[map] = "@"..s -- mapsDataRaw[mapcode] = '@mapcode;playername#tagtime;playerName#tagtime;playerName#tagtime; ...'
-				isMapCode = false
-			else
-				-- collect leaderboard data
-				playerCount = playerCount + 1
+			values[c] = data
+			c = c + 1
+		end
 
-				local playerName = data:match('(.-#[%d%?][%d%?][%d%?][%d%?])')
-				local time = data:match('.-#[%d%?][%d%?][%d%?][%d%?](%d+)')
+		-- values = { mapCode, playername time }
 
-				mapsData[map][playerCount] = {playerName, tonumber(time)}
-			end
+		local map = tonumber(values[1])
+		mapsDataRaw[map] = "@"..values[1]
+
+		local playerName = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?]')
+		local time = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?](%d+)')
+
+		if mapsData[map] then
+			mapsData[map][#mapsData[map] + 1] = {playerName, tonumber(time)}
+		else
+			mapsData[map] = {{playerName, tonumber(time)}}
 		end
 	end
 
@@ -441,44 +428,3 @@ tfm.exec.disablePhysicalConsumables()
 loadLeaderboard()
 
 tfm.exec.chatMessage("<bv>[Module]</bv> <n>Write !map when leaderboard data is loaded.</n>")
-
-
---[[
-
--- Saving Files after loading new
-	if isSavingFile then
-		local slicedFile = {}
-		do
-			isSavingFile = false
-
-			log({"<rose>Saving files...</rose>"})
-
-			-- replace map data in raw file
-			mapsDataRaw[mapCode] = fileToSave
-
-			log({"<j>+</j>", fileToSave})
-
-			-- concat mapData back
-			local newSaveFile, c = {}, 0
-			
-			for _, v in next, mapsDataRaw do
-				c = c + 1
-				newSaveFile[c] = v
-			end
-
-			newSaveFile = table.concat(newSaveFile, "")
-
-			slicedFile = slice(newSaveFile, 64950)
-		end
-
-		for i, v in next, slicedFile do
-			system.saveFile(v, i)
-		end
-
-		tfm.exec.chatMessage("<bv>[Module]</bv> <n>File saved.</n>")
-
-		--log({"<vp>Saved File :</vp> ", newSaveFile})	
-	end
-
-	
---]]

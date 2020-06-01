@@ -11,7 +11,7 @@ for i, v in next, ss do
 	else
 
 		local name = '<r>Error</r>'
-		if v[2]:find('#') then
+		if (not v[2]:find(',')) and v[2]:find('#') then
 			name = v[2]
 		else
 			name = v[2]..'#????'
@@ -35,4 +35,6 @@ for i, v in next, ss do
 	end--]]
 end
 
-print(table.concat(out, ''):gsub('%s+', ''))
+out = table.concat(out, ''):gsub('%s+', '')
+
+print(out)
