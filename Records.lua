@@ -123,7 +123,7 @@ function loadMapLeaderboard()
 
 	for i, v in next, mapsData[mapCode] do
 		leaderboardAdd(v[1], v[2])
-		tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..tostring(v[1]).." "..formatTime(tostring(v[2])))
+		tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(v[1])).." "..formatTime(tostring(v[2])))
 	end
 	
 	updateUi()
@@ -216,11 +216,11 @@ function eventChatCommand(playerName, command)
 
 	if args[1] == "monitor" then
 		Data.monitor = args[2] == "on"
-		tfm.exec.chatMessage(Data.monitor and "Monitor enabled" or "Monitor disabled", playerName)
+		tfm.exec.chatMessage(Data.monitor and "<vp>●</vp> Monitor enabled" or "<r>●</r> Monitor disabled", playerName)
 
 	elseif args[1] == "hideTags" then
 		Data.monitor = args[2] == "on"
-		tfm.exec.chatMessage(Data.monitor and "Hide tags enabled" or "Hide tags disabled", playerName)
+		tfm.exec.chatMessage(Data.monitor and "<vp>●</vp> Hide tags enabled" or "<r>●</r> Hide tags disabled", playerName)
 
 	end
 
@@ -258,6 +258,15 @@ end
 function formatTime(t)
 	local s = t%100
 	return tostring((t-s)/100).."."..tostring(s).."s"
+end
+
+
+function formatPlayerName(s, target)
+	if target and playerData[target].hideTags then
+		return s:sub(0, -6)
+	else
+		return s:sub(0, -6).."<font size='9'><g>"..s:sub(-5).."</g></font>"
+	end
 end
 
 
@@ -324,9 +333,9 @@ function leaderboardUpdateUi(playerName, show)
 
 			for i, v in next, leaderboard do
 				if i > 1 then
-					out[i] = "<v>0"..i.."</v><g>-"..v[1].."</g> <v>"..formatTime(v[2]).."</v>"
+					out[i] = "<v>0"..i.."</v><g>-"..formatPlayerName(v[1], playerName).."</g> <v>"..formatTime(v[2]).."</v>"
 				else
-					out[i] = "<font color='#EBB741'>01</font><g>-"..v[1].."</g> <v>"..formatTime(v[2]).."</v>"
+					out[i] = "<font color='#EBB741'>01</font><g>-"..formatPlayerName(v[1], playerName).."</g> <v>"..formatTime(v[2]).."</v>"
 				end
 			end
 
@@ -341,7 +350,7 @@ end
 function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn) 
 	tfm.exec.respawnPlayer(playerName)
 
-	local winMsg = "<rose><b>@"..mapCode.."</b> ".."<i>"..playerName.."</i> "..formatTime(timeElapsedSinceRespawn).."</rose>"
+	local winMsg = "<rose><b>@"..mapCode.."</b> "..formatPlayerName(playerName, playerName).." <i>"..formatTime(timeElapsedSinceRespawn).."</i></rose>"
 
 	-- Show msg for each monitoring player
 	for playerNameMonitor, Data in next, playerData do
