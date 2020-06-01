@@ -214,14 +214,31 @@ function eventChatCommand(playerName, command)
 
 	local Data = playerData[playerName]
 
-	if args[1] == "monitor" then
-		Data.monitor = args[2] == "on"
+	if args[1] == "rawdata" then
+		if args[2] then
+			tfm.exec.chatMessage(mapsDataRaw[tonumber(args[2])])
+		end
+
+	elseif args[1] == "table" then
+		tfm.exec.chatMessage("<bv>[Module]</bv> <vp>docs.google.com/spreadsheets/d/1l3D-tmUAgwqNPjR3qa1rKqNkNYImPLC3dhgHUD3gLjo</vp>")
+
+	elseif args[1] == "monitor" then
+		if args[2] then
+			Data.monitor = args[2] == "on"
+		else
+			Data.monitor = not Data.monitor
+		end
+
 		tfm.exec.chatMessage(Data.monitor and "<vp>●</vp> Monitor enabled" or "<r>●</r> Monitor disabled", playerName)
 
 	elseif args[1] == "hideTags" then
-		Data.monitor = args[2] == "on"
-		tfm.exec.chatMessage(Data.monitor and "<vp>●</vp> Hide tags enabled" or "<r>●</r> Hide tags disabled", playerName)
+		if args[2] then
+			Data.hideTags = args[2] == "on"
+		else
+			Data.hideTags = not Data.hideTags
+		end
 
+		tfm.exec.chatMessage(Data.hideTags and "<vp>●</vp> Hide tags enabled" or "<r>●</r> Hide tags disabled", playerName)
 	end
 
 	if playerName ~= admin then return end
@@ -241,13 +258,8 @@ function eventChatCommand(playerName, command)
 		tfm.exec.newGame(args[2] or "#17")
 
 	elseif args[1] == "win" then
-		tfm.exec.giveCheese(playerName)
-		tfm.exec.playerVictory(playerName)
-
-	elseif args[1] == "record" then
-		if args[2] then
-			tfm.exec.chatMessage(mapsDataRaw[tonumber(args[2])])
-		end
+		tfm.exec.giveCheese(args[2])
+		tfm.exec.playerVictory(args[2])
 
 	end
 end
@@ -289,7 +301,14 @@ end
 
 function updateHelpUi(playerName, show)
 	if show then
-		local text = "[ ... ] optional\n<v>!map</v> [@123456 / #17]\n<v>!monitor</v> [on / off]\n<v>!hideTags</v> [on / off]\n<v>hold H</v> show UI\n"
+		local text = [[[ ... ] optional
+<v>!map</v> [@123456 / #17]
+<v>!monitor</v> [on / off]
+<v>!hideTags</v> [on / off]
+<v>hold <b>H</b></v> show UI
+<v><b>Del</b></v> /mort
+]]
+
 		ui.addTextArea(10, text, playerName, 600, 160, 195, 115, 0, 0, 0, true)
 	else
 		ui.removeTextArea(10, playerName)
