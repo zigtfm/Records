@@ -85,7 +85,7 @@ end
 
 --[[ / --]]
 
---[[ --]]
+--[[ Saving & Loading --]]
 
 function saveLeaderboard()
 	if (not leaderboard) or (leaderboard == {}) then
@@ -150,7 +150,7 @@ function eventFileLoaded(fileNumber, fileData)
 		-- values = { mapCode, playername time }
 
 		local map = tonumber(values[1])
-		mapsDataRaw[map] = "@"..values[1]
+		mapsDataRaw[map] = "@"..s
 
 		local playerName = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?]')
 		local time = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?](%d+)')

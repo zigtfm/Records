@@ -1,7 +1,7 @@
 todo:
 
 !!! ( why it excists )
-fix saving function
+nothing
 
 ! ( next )
 add help popup
