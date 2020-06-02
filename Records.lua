@@ -68,6 +68,7 @@ function eventNewPlayer(playerName)
 	playerData[playerName] = {
 		killTimer = false,
 		showUi = false,
+		showHelp = false,
 		monitor = false,
 		hideTags = true,
 	}
@@ -75,6 +76,7 @@ end
 
 for playerName in next, tfm.get.room.playerList do
 	eventNewPlayer(playerName)
+	tfm.exec.freezePlayer(playerName)
 end
 
 --[[ --]]
@@ -202,7 +204,7 @@ end
 
 --[[ / --]]
 
---[[ --]]
+--[[ Commands --]]
 
 function eventChatCommand(playerName, command)
 	local args, c = {}, 1
@@ -214,13 +216,20 @@ function eventChatCommand(playerName, command)
 
 	local Data = playerData[playerName]
 
-	if args[1] == "rawdata" then
+	if args[1] == "help" then
+		Data.showHelp = not Data.showHelp
+		updateHelpPopup(playerName, Data.showHelp)
+
+	elseif args[1] == "rawdata" then
 		if args[2] then
 			tfm.exec.chatMessage(mapsDataRaw[tonumber(args[2])])
 		end
 
 	elseif args[1] == "table" then
 		tfm.exec.chatMessage("<bv>[Module]</bv> <vp>docs.google.com/spreadsheets/d/1l3D-tmUAgwqNPjR3qa1rKqNkNYImPLC3dhgHUD3gLjo</vp>")
+
+	elseif args[1] == "map" then
+		tfm.exec.newGame(args[2] or "#17")
 
 	elseif args[1] == "monitor" then
 		if args[2] then
@@ -229,7 +238,7 @@ function eventChatCommand(playerName, command)
 			Data.monitor = not Data.monitor
 		end
 
-		tfm.exec.chatMessage(Data.monitor and "<vp>●</vp> Monitor enabled" or "<r>●</r> Monitor disabled", playerName)
+		tfm.exec.chatMessage(Data.monitor and "<vp>•</vp> Monitor enabled" or "<r>•</r> Monitor disabled", playerName)
 
 	elseif args[1] == "hideTags" then
 		if args[2] then
@@ -238,7 +247,7 @@ function eventChatCommand(playerName, command)
 			Data.hideTags = not Data.hideTags
 		end
 
-		tfm.exec.chatMessage(Data.hideTags and "<vp>●</vp> Hide tags enabled" or "<r>●</r> Hide tags disabled", playerName)
+		tfm.exec.chatMessage(Data.hideTags and "<vp>•</vp> Hide tags enabled" or "<r>•</r> Hide tags disabled", playerName)
 	end
 
 	if playerName ~= admin then return end
@@ -254,12 +263,26 @@ function eventChatCommand(playerName, command)
 	elseif args[1] == "load" then
 		loadMapLeaderboard()
 
-	elseif args[1] == "map" then
-		tfm.exec.newGame(args[2] or "#17")
-
 	elseif args[1] == "win" then
 		tfm.exec.giveCheese(args[2])
 		tfm.exec.playerVictory(args[2])
+
+	elseif args[1] == "rawdata" then
+		if args[2] then
+			tfm.exec.chatMessage(mapsDataRaw[tonumber(args[2])])
+		end
+	end
+end
+
+--[[ Callbacks --]]
+
+function eventTextAreaCallback(textAreaId, playerName, eventName)
+	if eventName:sub(1, 8) == 'command_' then
+		eventChatCommand(playerName, eventName:sub(9))
+
+	elseif eventName == 'close_help' then
+		playerData[playerName].showHelp = false
+		updateHelpPopup(playerName, false)
 
 	end
 end
@@ -287,31 +310,51 @@ function updateUi(playerName)
 		local show = playerData[playerName].showUi
 
 		leaderboardUpdateUi(playerName, show)
-		updateHelpUi(playerName, show)
+		-- updateHelpUi(playerName, show)
 	else
 		for playerName, Data in next, playerData do
 			if Data.showUi then
 				leaderboardUpdateUi(playerName, true)
-				updateHelpUi(playerName, true)
+				-- updateHelpUi(playerName, true)
 			end
 		end
 	end
 end
 
 
-function updateHelpUi(playerName, show)
-	if show then
-		local text = [[[ ... ] optional
-<v>!map</v> [@123456 / #17]
-<v>!monitor</v> [on / off]
-<v>!hideTags</v> [on / off]
-<v>hold <b>H</b></v> show UI
-<v><b>Del</b></v> /mort
-]]
+-- function updateHelpUi(playerName, show)
+-- 	if show then
+-- 		local text = [[
+-- <v>!monitor</v> [on / off]
+-- <v>!hideTags</v> [on / off]
+-- ]]
+-- 		ui.addTextArea(5, text, playerName, 600, 160, 195, 115, 0, 0, 0, true)
+-- 	else
+-- 		ui.removeTextArea(5, playerName)
+-- 	end
+-- end
 
-		ui.addTextArea(10, text, playerName, 600, 160, 195, 115, 0, 0, 0, true)
+
+function updateHelpPopup(playerName, show)
+	if show then
+		local Data = playerData[playerName]
+
+		ui.addTextArea(100, "", playerName, 220, 60, 220, 180, 0x2c0c01, 0x2c0c01, 0.9, true)
+		ui.addTextArea(101, "", playerName, 225, 65, 210, 170, 0x4d1e0e, 0x2c0c01, 0.5, true)
+		ui.addTextArea(102, "\n\n\n<v>!help</v>\n<v><b><a href='event:command_table'>!table</a></b></v>\n<v>!wr</v>\n\n<v><b><a href='event:command_monitor'>!monitor</a></b></v>\n<v><b><a href='event:command_hideTags'>!hideTags</a></b></v>\n\n<v>hold <b>H</b></v>\n<v><b>Del</b></v>", playerName, 240, 60, 70, 180, 0x000000, 0x000000, 0, true)
+		ui.addTextArea(103, "\n[ ... ] optional\n\n\n\n@123456\n\n[on / off]\n[on / off]\n\nshow UI\n/mort\n", playerName, 310, 60, 130, 180, 0x000000, 0x000000, 0, true)
+		--ui.addTextArea(104, "\n", playerName, 220, 250, 220, 120, 0x2c0c01, 0x2c0c01, 0.9, true)
+		--ui.addTextArea(105, "", playerName, 225, 255, 210, 110, 0x4d1e0e, 0x2c0c01, 0.5, true)
+		--ui.addTextArea(106, "\n<v>!admin</v>\n<v>!unadmin</v>\n<v>!map</v>", playerName, 240, 270, 70, 100, 0x000000, 0x000000, 0, true)
+		--ui.addTextArea(107, "\nName#0000\nName#0000\n[@123456 / #17]", playerName, 310, 270, 130, 100, 0x000000, 0x000000, 0, true)
+		--ui.addTextArea(108, "", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
+		ui.addTextArea(109, "<a href='event:close_help'><p align='center'>\nClose</p></a>", playerName, 220, 205, 220, 30, 0x000000, 0x000000, 0, true)
+		--ui.addTextArea(110, "\n<bv><b>#wr</b></bv>\nmade by Zigwin<g><font size='9'>#0000</font></g>\n\n<a href='event:link_translate'>Translate</a>\n<a href='event:link_issue'>Bug & Suggestion</a>\n", playerName, 450, 250, 140, 120, 0x2c0c01, 0x000000, 0.5, true)
+		--ui.addTextArea(111, "\n<p align='center'><r>Admins</r></p>", playerName, 220, 250, 220, 30, 0x000000, 0x000000, 0, true)
 	else
-		ui.removeTextArea(10, playerName)
+		for id = 100, 112 do
+			ui.removeTextArea(id, playerName)
+		end
 	end
 end
 

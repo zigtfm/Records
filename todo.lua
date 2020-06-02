@@ -4,13 +4,12 @@ todo:
 nothing
 
 ! ( next )
-add help popup
-add more commnads info in help
+add admins
 
 ~ ( maybe later )
-add admins
-add togglable commands indicators in help
+nothing
 
 ? ( possible ideas )
+personal records
 add time check with os.time()
 add practice mode with checkpoints, fast respawn, teleport etc.
