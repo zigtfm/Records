@@ -72,6 +72,8 @@ function eventNewPlayer(playerName)
 		monitor = false,
 		hideTags = true,
 	}
+
+	tfm.exec.chatMessage('<j>[Module]</j> <n>hold H</n> to open UI. <n>!help</n> to get more info.', playerName)
 end
 
 for playerName in next, tfm.get.room.playerList do
@@ -394,10 +396,12 @@ function leaderboardUpdateUi(playerName, show)
 			local out = {}
 
 			for i, v in next, leaderboard do
+				local displayPlayerName = formatPlayerName(v[1], playerName)
+				
 				if i > 1 then
-					out[i] = "<v>0"..i.."</v><g>-"..formatPlayerName(v[1], playerName).."</g> <v>"..formatTime(v[2]).."</v>"
+					out[i] = "<v>0"..i.."</v><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
 				else
-					out[i] = "<font color='#EBB741'>01</font><g>-"..formatPlayerName(v[1], playerName).."</g> <v>"..formatTime(v[2]).."</v>"
+					out[i] = "<font color='#EBB741'>01</font><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
 				end
 			end
 
