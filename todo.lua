@@ -1,7 +1,7 @@
 todo:
 
 !!! ( why it excists )
-(!try to) split file saves by maps category
+nothing
 
 ! ( next )
 add admins

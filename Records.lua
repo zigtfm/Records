@@ -31,6 +31,7 @@ end
 --[[ Misc Functions--]]
 
 
+-- return : copy of the table
 function table.copy(t)
 	local out = {}
 	for i, v in next, t do
@@ -40,11 +41,21 @@ function table.copy(t)
 end
 
 
+-- return : index by value
+function table.find(t, v)
+	for i, s in next, t do
+		if v == s then
+			return i
+
+		end
+	end
+end
+
 --[[ / --]]
 
 --[[ --]]
 
-
+local dataCategory	-- Category = fileNumber
 local mapCode
 local mapsDataRaw = {}
 local mapsData = {}
@@ -89,8 +100,25 @@ end
 
 --[[ / --]]
 
+--[[ Files Enum -]]
+
+local fileCategory = {
+	[1] = 'racing',
+	[2] = 'bootcamp',
+	[3] = 'mymaps',
+}
+
+local filePerm = {
+	[1] = '#17',
+	[2] = '#3',
+	[3] = '@7731822',
+}
+
+--[[ / --]]
+
 --[[ Saving & Loading --]]
 
+-- pack leaderboard 1st place data -> save after loading the file (in eventFileLoaded)
 function saveLeaderboard()
 	if (not leaderboard) or (leaderboard == {}) then
 		log({"<r>Can't save</r> : Leaderboard is empty!"})
@@ -105,15 +133,17 @@ function saveLeaderboard()
 	fileToSave = output
 	isSavingFile = true
 
-	loadLeaderboard()
+	loadLeaderboard(dataCategory)
 end
 
+-- load chosen file
+function loadLeaderboard(fileNumber)
+	log({"Leaderboard load", fileNumber.." - "..fileCategory[fileNumber]})
 
-function loadLeaderboard()
-	system.loadFile(1)
+	system.loadFile(fileNumber)
 end
 
-
+-- take data from mapsData and fill the leaderboard
 function loadMapLeaderboard()
 	if not mapCode then
 		log({"<r>mapCode = nil!</r>"})
@@ -123,19 +153,22 @@ function loadMapLeaderboard()
 		return
 	end
 
-	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." leaderboard loaded!</n>", playerName)
+	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!", playerName)
 
 	for i, v in next, mapsData[mapCode] do
 		leaderboardAdd(v[1], v[2])
-		tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(v[1])).." "..formatTime(tostring(v[2])))
 	end
+
+	local wrString = mapsData[mapCode][1]
+
+	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
 	
 	updateUi()
 end
 
 
 -- @mapcode;playername#tagtime;
-
+-- after the file loaded unpack it and save new file ( if isSavingFile = true )
 function eventFileLoaded(fileNumber, fileData)
 	--log({"<vp>File Loaded</vp>", "<v>"..fileNumber.."</v> : "..fileData})
 
@@ -167,10 +200,10 @@ function eventFileLoaded(fileNumber, fileData)
 	end
 
 	-- logs
-	--log({"<rose>mapsDataRaw : </rose>"})
-	--for i, v in next, mapsDataRaw do
-	--	log({"<j>"..tostring(i).."</j>", v})
-	--end
+	-- log({"<rose>mapsDataRaw : </rose>"})
+	-- for i, v in next, mapsDataRaw do
+	-- 	log({"<j>"..tostring(i).."</j>", v})
+	-- end
 
 	tfm.exec.chatMessage("<bv>[Module]</bv> <n>Leaderboard data loaded.</n>")
 
@@ -206,7 +239,7 @@ end
 
 --[[ / --]]
 
---[[ Commands --]]
+--[[ Commands --event]]
 
 function eventChatCommand(playerName, command)
 	local args, c = {}, 1
@@ -231,7 +264,7 @@ function eventChatCommand(playerName, command)
 		tfm.exec.chatMessage("<bv>[Module]</bv> <vp>docs.google.com/spreadsheets/d/1l3D-tmUAgwqNPjR3qa1rKqNkNYImPLC3dhgHUD3gLjo</vp>")
 
 	elseif args[1] == "map" then
-		tfm.exec.newGame(args[2] or "#17")
+		tfm.exec.newGame(args[2] or filePerm[dataCategory])
 
 	elseif args[1] == "monitor" then
 		if args[2] then
@@ -279,12 +312,19 @@ end
 --[[ Callbacks --]]
 
 function eventTextAreaCallback(textAreaId, playerName, eventName)
+	print(eventName)
 	if eventName:sub(1, 8) == 'command_' then
 		eventChatCommand(playerName, eventName:sub(9))
 
 	elseif eventName == 'close_help' then
 		playerData[playerName].showHelp = false
 		updateHelpPopup(playerName, false)
+
+	elseif eventName:sub(1, 5) == "load_" then
+		ui.removeTextArea(3)
+		local fileNumber = table.find(fileCategory, eventName:sub(6))
+		dataCategory = tonumber(fileNumber)
+		loadLeaderboard(fileNumber)
 
 	end
 end
@@ -500,6 +540,13 @@ tfm.exec.disableAutoScore()
 tfm.exec.disableAfkDeath()
 tfm.exec.disablePhysicalConsumables()
 
-loadLeaderboard()
+do
+	tfm.exec.chatMessage("<bv>[Module]</bv> <n>Write !map when leaderboard data is loaded.</n>")
 
-tfm.exec.chatMessage("<bv>[Module]</bv> <n>Write !map when leaderboard data is loaded.</n>")
+	local pickCategoryText = {}
+	for i, v in next, fileCategory do
+		pickCategoryText[i] = "<a href='event:load_"..v.."'>"..v.."</a>"
+	end
+
+	ui.addTextArea(3, "<b>Choose leaderboard data to load</b>\n<n>"..table.concat(pickCategoryText, "\n").."</n>", admin, 300, 100, 200, 0, 0, 0, 0, true)
+end
