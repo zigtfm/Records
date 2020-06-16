@@ -1,8 +1,12 @@
+--[[
 local admin
 do
 	local _,name = pcall(nil)
 	admin = string.match(name, "(.-)%.")
 end
+--]]
+owner = "Zigwin#0000"
+roomCreator = tfm.get.room.name:match("wr%d+(.-#%d%d%d%d)")
 
 --[[ Debug --]]
 
@@ -55,6 +59,7 @@ end
 
 --[[ --]]
 
+local isLeaderboardDataLoaded = false
 local dataCategory	-- Category = fileNumber
 local mapCode
 local mapsDataRaw = {}
@@ -80,8 +85,9 @@ function eventNewPlayer(playerName)
 		killTimer = false,
 		showUi = false,
 		showHelp = false,
-		monitor = false,
+		monitor = true,
 		hideTags = true,
+		admin = false,
 	}
 
 	tfm.exec.chatMessage('<j>[Module]</j> <n>hold H</n> to open UI. <n>!help</n> to get more info.', playerName)
@@ -234,6 +240,8 @@ function eventFileLoaded(fileNumber, fileData)
 
 		--log({"<vp>Saved File :</vp> ", newSaveFile})	
 	end
+
+	isLeaderboardDataLoaded = true
 end
 
 
@@ -255,16 +263,20 @@ function eventChatCommand(playerName, command)
 		Data.showHelp = not Data.showHelp
 		updateHelpPopup(playerName, Data.showHelp)
 
-	elseif args[1] == "rawdata" then
+	elseif args[1] == "wr" then
 		if args[2] then
-			tfm.exec.chatMessage(mapsDataRaw[tonumber(args[2])])
+			local map = args[2]:gsub("@", "")
+			map = tonumber(map)
+
+			if mapsData[map] then
+				local wrData = mapsData[map][1]
+				tfm.exec.chatMessage("<b>(</b>"..fileCategory[dataCategory].."<b>)</b> @"..map.." "..formatPlayerName(wrData[1]).." "..formatTime(wrData[2]))
+			end
 		end
 
 	elseif args[1] == "table" then
 		tfm.exec.chatMessage("<bv>[Module]</bv> <vp>docs.google.com/spreadsheets/d/1l3D-tmUAgwqNPjR3qa1rKqNkNYImPLC3dhgHUD3gLjo</vp>")
 
-	elseif args[1] == "map" then
-		tfm.exec.newGame(args[2] or filePerm[dataCategory])
 
 	elseif args[1] == "monitor" then
 		if args[2] then
@@ -285,7 +297,33 @@ function eventChatCommand(playerName, command)
 		tfm.exec.chatMessage(Data.hideTags and "<vp>•</vp> Hide tags enabled" or "<r>•</r> Hide tags disabled", playerName)
 	end
 
-	if playerName ~= admin then return end
+
+	local isCreator = playerName == roomCreator
+	if isCreator or Data.admin then
+		if args[1] == "map" then
+			tfm.exec.newGame(args[2] or filePerm[dataCategory])
+		end
+		if isCreator then
+			if args[1] == "admin" then
+				local argName = args[2]
+
+				if playerData[argName] then
+					playerData[argName].admin = true
+					tfm.exec.chatMessage("<vp>•</vp> "..argName.." is admin now")
+				end
+			elseif args[1] == "unadmin" then
+				local argName = args[2]
+
+				if playerData[argName] then
+					playerData[argName].admin = false
+					tfm.exec.chatMessage("<r>•</r> "..argName.." is not admin now", playerName)
+				end
+			end
+		end
+	end
+
+
+	if playerName ~= owner then return end
 
 	if (args[1] == "save") and (saveTimer == 0) then
 		saveLeaderboard()
@@ -331,6 +369,31 @@ end
 
 --[[ / --]]
 
+--[[ Particles --]]
+
+local drawParticle = tfm.exec.displayParticle
+
+function particlesDrawFirework()
+	local r = 50 -- radius
+	local pi = math.pi
+
+	for x = 350, 450, 100 do
+		for i = -pi/4, -pi*2, -0.2 do
+			local type = math.random(21, 24)
+
+			drawParticle(type, x + math.cos(i)*r, 200 + math.sin(i)*r)
+		end
+		for x2 = 0, 50, 8 do
+			local type = math.random(21, 24)
+
+			drawParticle(type, x+x2, 200)
+		end
+	end
+end
+
+--[[ --]]
+
+--[[ --]]
 
 function formatTime(t)
 	local s = t%100
@@ -385,14 +448,14 @@ function updateHelpPopup(playerName, show)
 		ui.addTextArea(101, "", playerName, 225, 65, 210, 170, 0x4d1e0e, 0x2c0c01, 0.5, true)
 		ui.addTextArea(102, "\n\n\n<v>!help</v>\n<v><b><a href='event:command_table'>!table</a></b></v>\n<v>!wr</v>\n\n<v><b><a href='event:command_monitor'>!monitor</a></b></v>\n<v><b><a href='event:command_hideTags'>!hideTags</a></b></v>\n\n<v>hold <b>H</b></v>\n<v><b>Del</b></v>", playerName, 240, 60, 70, 180, 0x000000, 0x000000, 0, true)
 		ui.addTextArea(103, "\n[ ... ] optional\n\n\n\n@123456\n\n[on / off]\n[on / off]\n\nshow UI\n/mort\n", playerName, 310, 60, 130, 180, 0x000000, 0x000000, 0, true)
-		--ui.addTextArea(104, "\n", playerName, 220, 250, 220, 120, 0x2c0c01, 0x2c0c01, 0.9, true)
-		--ui.addTextArea(105, "", playerName, 225, 255, 210, 110, 0x4d1e0e, 0x2c0c01, 0.5, true)
-		--ui.addTextArea(106, "\n<v>!admin</v>\n<v>!unadmin</v>\n<v>!map</v>", playerName, 240, 270, 70, 100, 0x000000, 0x000000, 0, true)
-		--ui.addTextArea(107, "\nName#0000\nName#0000\n[@123456 / #17]", playerName, 310, 270, 130, 100, 0x000000, 0x000000, 0, true)
-		--ui.addTextArea(108, "", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
-		ui.addTextArea(109, "<a href='event:close_help'><p align='center'>\nClose</p></a>", playerName, 220, 205, 220, 30, 0x000000, 0x000000, 0, true)
-		--ui.addTextArea(110, "\n<bv><b>#wr</b></bv>\nmade by Zigwin<g><font size='9'>#0000</font></g>\n\n<a href='event:link_translate'>Translate</a>\n<a href='event:link_issue'>Bug & Suggestion</a>\n", playerName, 450, 250, 140, 120, 0x2c0c01, 0x000000, 0.5, true)
-		--ui.addTextArea(111, "\n<p align='center'><r>Admins</r></p>", playerName, 220, 250, 220, 30, 0x000000, 0x000000, 0, true)
+		ui.addTextArea(104, "\n", playerName, 220, 250, 220, 120, 0x2c0c01, 0x2c0c01, 0.9, true)
+		ui.addTextArea(105, "", playerName, 225, 255, 210, 110, 0x4d1e0e, 0x2c0c01, 0.5, true)
+		ui.addTextArea(106, "\n<v>!admin</v>\n<v>!unadmin</v>\n<v>!map</v>", playerName, 240, 270, 70, 100, 0x000000, 0x000000, 0, true)
+		ui.addTextArea(107, "\nName#0000\nName#0000\n[@123456 / #17]", playerName, 310, 270, 130, 100, 0x000000, 0x000000, 0, true)
+		ui.addTextArea(108, "", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
+		ui.addTextArea(110, "\n<bv><b>#wr</b></bv>\nmade by Zigwin<g><font size='9'>#0000</font></g>\n\n<a href='event:link_translate'>Translate</a>\n<a href='event:link_issue'>Bug & Suggestion</a>\n", playerName, 450, 250, 140, 120, 0x2c0c01, 0x000000, 0.5, true)
+		ui.addTextArea(111, "\n<p align='center'><r>Admins</r></p>", playerName, 220, 250, 220, 30, 0x000000, 0x000000, 0, true)
+		ui.addTextArea(109, "<a href='event:close_help'><p align='center'>\nClose</p></a>", playerName, 220, 330, 220, 30, 0x000000, 0x000000, 0, true)
 	else
 		for id = 100, 112 do
 			ui.removeTextArea(id, playerName)
@@ -472,6 +535,13 @@ function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn)
 
 	leaderboardAdd(playerName, timeElapsedSinceRespawn)
 	updateUi()
+
+	if previousWR and (previousWR > leaderboard[1][2]) then
+		tfm.exec.chatMessage("<rose><b>"..formatPlayerName(leaderboard[1][1]).."</b> set a new WR!</rose>")
+		particlesDrawFirework()
+
+		previousWR = leaderboard[1][2]
+	end
 end
 
 --[[ / --]]
@@ -493,6 +563,12 @@ function eventNewGame()
 	leaderboardPlayerList = {}
 
 	loadMapLeaderboard()
+
+	if leaderboard[1] and leaderboard[1][2] then
+		previousWR = leaderboard[1][2]
+	else
+		previousWR = nil
+	end
 end
 
 function eventKeyboard(playerName, keyCode, down, xPlayerPosition, yPlayerPosition)
@@ -514,7 +590,7 @@ function eventLoop(elapsedTime, remainingTime)
 		end
 	end
 
-	if saveTimer ~= 0 then
+	if isLeaderboardDataLoaded and (saveTimer ~= 0) then
 		saveTimer = saveTimer - 1
 
 		if saveTimer % 2 == 0 then
@@ -529,8 +605,8 @@ function eventLoop(elapsedTime, remainingTime)
 	end
 end
 
-ui.addTextArea(2, "<font color='#000000'>Save is available</font>", nil, 6, 381, 0, 0, 1, 1, 0, true)
-ui.addTextArea(1, "<rose>Save is available<rose>", nil, 5, 380, 0, 0, 1, 1, 0, true)
+ui.addTextArea(2, "<font color='#000000'>60s</font>", nil, 6, 381, 0, 0, 1, 1, 0, true)
+ui.addTextArea(1, "<rose>60s<rose>", nil, 5, 380, 0, 0, 1, 1, 0, true)
 
 --[[ / --]]
 
