@@ -6,7 +6,7 @@ do
 end
 --]]
 owner = "Zigwin#0000"
-roomCreator = tfm.get.room.name:match("wr%d+(.-#%d%d%d%d)")
+roomCreator = tfm.get.room.name:match("test%d+(.-#%d%d%d%d)")
 
 --[[ Debug --]]
 
@@ -88,6 +88,8 @@ function eventNewPlayer(playerName)
 		monitor = true,
 		hideTags = true,
 		admin = false,
+		--timeSinceRespawn = os.time(),
+		--timeSinceRespawnEvent = os.time(),
 	}
 
 	tfm.exec.chatMessage('<j>[Module]</j> <n>hold H</n> to open UI. <n>!help</n> to get more info.', playerName)
@@ -103,6 +105,11 @@ end
 function eventPlayerDied(playerName)
 	playerData[playerName].killTimer = true
 end
+
+
+-- function eventPlayerRespawn(playerName)
+-- 	playerData[playerName].timeSinceRespawnEvent = os.time()
+-- end
 
 --[[ / --]]
 
@@ -517,7 +524,17 @@ end
 
 
 function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn) 
+	local Data = playerData[playerName]
+
 	tfm.exec.respawnPlayer(playerName)
+
+	-- local ostimeTime = os.time() - Data.timeSinceRespawn
+	-- local ostimeTimeEvent = os.time() - Data.timeSinceRespawnEvent
+
+	-- ostimeTime = (ostimeTime - ostimeTime % 10) / 10
+	-- ostimeTimeEvent = (ostimeTimeEvent - ostimeTimeEvent % 10) / 10
+
+	--local winMsg = "<rose><b>@"..mapCode.."</b> "..formatPlayerName(playerName, playerName).." <i>"..formatTime(timeElapsedSinceRespawn).."</i></rose>".." ("..formatTime(ostimeTime).."; "..formatTime(ostimeTimeEvent)..")"
 
 	local winMsg = "<rose><b>@"..mapCode.."</b> "..formatPlayerName(playerName, playerName).." <i>"..formatTime(timeElapsedSinceRespawn).."</i></rose>"
 
@@ -529,7 +546,7 @@ function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn)
 	end
 
 	-- Show player's win msg (with monitoring off)
-	if not playerData[playerName].monitor then
+	if not Data.monitor then
 		tfm.exec.chatMessage(winMsg, playerName)
 	end
 
@@ -587,6 +604,7 @@ function eventLoop(elapsedTime, remainingTime)
 		if Data.killTimer then
 			tfm.exec.respawnPlayer(playerName)
 			Data.killTimer = false
+			--Data.timeSinceRespawn = os.time()
 		end
 	end
 
