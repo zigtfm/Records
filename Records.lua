@@ -90,7 +90,11 @@ function eventNewPlayer(playerName)
 		admin = false,
 		--timeSinceRespawn = os.time(),
 		--timeSinceRespawnEvent = os.time(),
+
+		records = {},
 	}
+
+	system.loadPlayerData(playerName)
 
 	tfm.exec.chatMessage('<j>[Module]</j> <n>hold H</n> to open UI. <n>!help</n> to get more info.', playerName)
 end
@@ -157,6 +161,7 @@ function loadLeaderboard(fileNumber)
 end
 
 -- take data from mapsData and fill the leaderboard
+-- take data from playerData[].records for the personal records
 function loadMapLeaderboard()
 	if not mapCode then
 		log({"<r>mapCode = nil!</r>"})
@@ -165,6 +170,8 @@ function loadMapLeaderboard()
 		tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." data is empty!</n>", playerName)
 		return
 	end
+
+	-- mapsData
 
 	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!", playerName)
 
@@ -176,9 +183,18 @@ function loadMapLeaderboard()
 
 	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
 	
+
+	-- playerData
+
+	for playerName, Data in next, playerData do
+		if Data.records[mapCode] then
+			leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
+		end
+	end
+
+
 	updateUi()
 end
-
 
 -- @mapcode;playername#tagtime;
 -- after the file loaded unpack it and save new file ( if isSavingFile = true )
@@ -241,7 +257,7 @@ function eventFileLoaded(fileNumber, fileData)
 
 		newSaveFile = table.concat(newSaveFile, "")
 
-		system.saveFile(newSaveFile, 1)
+		system.saveFile(newSaveFile, dataCategory)
 
 		tfm.exec.chatMessage("<bv>[Module]</bv> <n>File saved.</n>")
 
@@ -250,6 +266,44 @@ function eventFileLoaded(fileNumber, fileData)
 
 	isLeaderboardDataLoaded = true
 end
+
+
+function savePlayerData(playerName)
+	if mapCode then
+		local Data = playerData[playerName]
+
+		Data.records[mapCode] = leaderboardPlayerList[playerName]
+
+		local rawRecords, c = {}, 0
+
+		for i, v in next, Data.records do
+			c = c + 1
+			rawRecords[c] = "@"..i..";"..v
+		end
+
+		system.savePlayerData(playerName, table.concat(rawRecords, ""))
+
+		tfm.exec.chatMessage("<bv>Saving personal record...</bv> ("..formatPlayerName(playerName)..", "..formatTime(leaderboardPlayerList[playerName])..")")
+	else
+		tfm.exec.chatMessage("<r>Can't save playerData</r> : Map is invalid ("..playerName..")")
+	end
+end
+
+
+--[[function loadPlayerData(playerData)
+	system.loadPlayerData(playerName)
+end--]]
+
+
+function eventPlayerDataLoaded(playerName, loadedPlayerData)
+	local Data = playerData[playerName]
+
+	for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
+		Data.records[tonumber(mapCode)] = tonumber(time);
+	end
+end
+
+
 
 
 --[[ / --]]
@@ -402,6 +456,7 @@ end
 
 --[[ --]]
 
+
 function formatTime(t)
 	local s = t%100
 	return tostring((t-s)/100).."."..tostring(s).."s"
@@ -459,7 +514,7 @@ function updateHelpPopup(playerName, show)
 		ui.addTextArea(105, "", playerName, 225, 255, 210, 110, 0x4d1e0e, 0x2c0c01, 0.5, true)
 		ui.addTextArea(106, "\n<v>!admin</v>\n<v>!unadmin</v>\n<v>!map</v>", playerName, 240, 270, 70, 100, 0x000000, 0x000000, 0, true)
 		ui.addTextArea(107, "\nName#0000\nName#0000\n[@123456 / #17]", playerName, 310, 270, 130, 100, 0x000000, 0x000000, 0, true)
-		ui.addTextArea(108, "", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
+		ui.addTextArea(108, "\n<bv><b>P<b></bv> means best personal record.", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
 		ui.addTextArea(110, "\n<bv><b>#wr</b></bv>\nmade by Zigwin<g><font size='9'>#0000</font></g>\n\n<a href='event:link_translate'>Translate</a>\n<a href='event:link_issue'>Bug & Suggestion</a>\n", playerName, 450, 250, 140, 120, 0x2c0c01, 0x000000, 0.5, true)
 		ui.addTextArea(111, "\n<p align='center'><r>Admins</r></p>", playerName, 220, 250, 220, 30, 0x000000, 0x000000, 0, true)
 		ui.addTextArea(109, "<a href='event:close_help'><p align='center'>\nClose</p></a>", playerName, 220, 330, 220, 30, 0x000000, 0x000000, 0, true)
@@ -476,13 +531,19 @@ end
 function leaderboardAdd(playerName, time)
 	--if (not leaderboardPlayerList[playerName]) or (time < leaderboardPlayerList[playerName]) then	
 
+	isSaving = not not playerData[playerName]
+
 	-- Add player on first completion
 	if not leaderboardPlayerList[playerName] then
 		leaderboardPlayerList[playerName] = time
+
+		if isSaving then savePlayerData(playerName) end
 	end
 	-- Check if new time is better
 	if time < leaderboardPlayerList[playerName] then
 		leaderboardPlayerList[playerName] = time
+
+		if isSaving then savePlayerData(playerName) end
 	end
 
 	local c = 0
@@ -569,9 +630,6 @@ end
 function eventNewGame()
 	if mapCode and (leaderboard ~= {}) then	
 		mapsData[mapCode] = table.copy(leaderboard)
-
-		log({"<rose>! Leaderboard !</rose>"})
-		log(leaderboard)
 	end
 
 	mapCode = tfm.get.room.xmlMapInfo.mapCode
