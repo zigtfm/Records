@@ -5,8 +5,10 @@ do
 	admin = string.match(name, "(.-)%.")
 end
 --]]
-owner = "Zigwin#0000"
-roomCreator = tfm.get.room.name:match("test%d+(.-#%d%d%d%d)")
+
+
+local owner = "Zigwin#0000"
+local roomCreator = tfm.get.room.name:match("test%d+(.-#%d%d%d%d)")
 
 --[[ Debug --]]
 
@@ -32,6 +34,7 @@ end
 
 --[[ / --]]
 
+
 --[[ Misc Functions--]]
 
 
@@ -56,6 +59,7 @@ function table.find(t, v)
 end
 
 --[[ / --]]
+
 
 --[[ --]]
 
@@ -133,182 +137,177 @@ local filePerm = {
 
 --[[ / --]]
 
+
 --[[ Saving & Loading --]]
 
 -- pack leaderboard 1st place data -> save after loading the file (in eventFileLoaded)
 function saveLeaderboard()
-	if (not leaderboard) or (leaderboard == {}) then
-		log({"<r>Can't save</r> : Leaderboard is empty!"})
-		return
-	elseif not mapCode then
-		log({"<r>Can't save</r> : mapCode = nil!"})
-		return
-	end
+if (not leaderboard) or (leaderboard == {}) then
+	log({"<r>Can't save</r> : Leaderboard is empty!"})
+	return
+elseif not mapCode then
+	log({"<r>Can't save</r> : mapCode = nil!"})
+	return
+end
 
-	local output = "@"..mapCode..";"..leaderboard[1][1]..leaderboard[1][2]..";"
+local output = "@"..mapCode..";"..leaderboard[1][1]..leaderboard[1][2]..";"
 
-	fileToSave = output
-	isSavingFile = true
+fileToSave = output
+isSavingFile = true
 
-	loadLeaderboard(dataCategory)
+loadLeaderboard(dataCategory)
 end
 
 -- load chosen file
 function loadLeaderboard(fileNumber)
-	log({"Leaderboard load", fileNumber.." - "..fileCategory[fileNumber]})
+--log({"Leaderboard load", fileNumber.." - "..fileCategory[fileNumber]})
 
-	system.loadFile(fileNumber)
+system.loadFile(fileNumber)
 end
 
 -- take data from mapsData and fill the leaderboard
 -- take data from playerData[].records for the personal records
 function loadMapLeaderboard()
-	if not mapCode then
-		log({"<r>mapCode = nil!</r>"})
-		return
-	elseif not mapsData[mapCode] then
-		tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." data is empty!</n>", playerName)
-		return
+if not mapCode then
+	log({"<r>mapCode = nil!</r>"})
+	return
+elseif not mapsData[mapCode] then
+	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." data is empty!</n>")
+	return
+end
+
+-- mapsData
+
+tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!")
+
+for i, v in next, mapsData[mapCode] do
+	leaderboardAdd("<j><b>WR</b></j> "..v[1], v[2])
+end
+
+local wrString = mapsData[mapCode][1]
+
+tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
+
+
+-- playerData
+
+for playerName, Data in next, playerData do
+	if Data.records[mapCode] then
+		leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
 	end
+end
 
-	-- mapsData
-
-	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!", playerName)
-
-	for i, v in next, mapsData[mapCode] do
-		leaderboardAdd(v[1], v[2])
-	end
-
-	local wrString = mapsData[mapCode][1]
-
-	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
-	
-
-	-- playerData
-
-	for playerName, Data in next, playerData do
-		if Data.records[mapCode] then
-			leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
-		end
-	end
-
-
-	updateUi()
+updateUi()
 end
 
 -- @mapcode;playername#tagtime;
 -- after the file loaded unpack it and save new file ( if isSavingFile = true )
 function eventFileLoaded(fileNumber, fileData)
-	--log({"<vp>File Loaded</vp>", "<v>"..fileNumber.."</v> : "..fileData})
+--log({"<vp>File Loaded</vp>", "<v>"..fileNumber.."</v> : "..fileData})
 
-	mapsData = {}
-	mapsDataRaw = {}
+mapsData = {}
+mapsDataRaw = {}
 
-	-- for each mapCode
-	for s in fileData:gmatch('[^@]+') do
-		local values, c = {}, 1
-		-- for each mapCode string divied by ';'
-		for data in s:gmatch('(.-);') do
-			values[c] = data
-			c = c + 1
-		end
-
-		-- values = { mapCode, playername time }
-
-		local map = tonumber(values[1])
-		mapsDataRaw[map] = "@"..s
-
-		local playerName = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?]')
-		local time = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?](%d+)')
-
-		if mapsData[map] then
-			mapsData[map][#mapsData[map] + 1] = {playerName, tonumber(time)}
-		else
-			mapsData[map] = {{playerName, tonumber(time)}}
-		end
+-- for each mapCode
+for s in fileData:gmatch('[^@]+') do
+	local values, c = {}, 1
+	-- for each mapCode string divied by ';'
+	for data in s:gmatch('(.-);') do
+		values[c] = data
+		c = c + 1
 	end
 
-	-- logs
-	-- log({"<rose>mapsDataRaw : </rose>"})
-	-- for i, v in next, mapsDataRaw do
-	-- 	log({"<j>"..tostring(i).."</j>", v})
-	-- end
+	-- values = { mapCode, playername time }
 
-	tfm.exec.chatMessage("<bv>[Module]</bv> <n>Leaderboard data loaded.</n>")
+	local map = tonumber(values[1])
+	mapsDataRaw[map] = "@"..s
 
-	-- Saving Files after loading new
-	if isSavingFile then
-		isSavingFile = false
+	local playerName = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?]')
+	local time = values[2]:match('.-#[%d%?][%d%?][%d%?][%d%?](%d+)')
 
-		log({"<rose>Saving files...</rose>"})
+	if mapsData[map] then
+		mapsData[map][#mapsData[map] + 1] = {playerName, tonumber(time)}
+	else
+		mapsData[map] = {{playerName, tonumber(time)}}
+	end
+end
 
-		-- replace map data in raw file
-		mapsDataRaw[mapCode] = fileToSave
+-- logs
+-- log({"<rose>mapsDataRaw : </rose>"})
+-- for i, v in next, mapsDataRaw do
+-- 	log({"<j>"..tostring(i).."</j>", v})
+-- end
 
-		log({"<j>+</j>", fileToSave})
+tfm.exec.chatMessage("<bv>[Module]</bv> <n>Leaderboard data loaded.</n>")
 
-		-- concat mapData back
-		local newSaveFile, c = {}, 0
-		
-		for _, v in next, mapsDataRaw do
-			c = c + 1
-			newSaveFile[c] = v
-		end
+-- Saving Files after loading new
+if isSavingFile then
+	isSavingFile = false
 
-		newSaveFile = table.concat(newSaveFile, "")
+	log({"<rose>Saving files...</rose>"})
 
-		system.saveFile(newSaveFile, dataCategory)
+	-- replace map data in raw file
+	mapsDataRaw[mapCode] = fileToSave
 
-		tfm.exec.chatMessage("<bv>[Module]</bv> <n>File saved.</n>")
+	log({"<j>+</j>", fileToSave})
 
-		--log({"<vp>Saved File :</vp> ", newSaveFile})	
+	-- concat mapData back
+	local newSaveFile, c = {}, 0
+
+	for _, v in next, mapsDataRaw do
+		c = c + 1
+		newSaveFile[c] = v
 	end
 
-	isLeaderboardDataLoaded = true
+	newSaveFile = table.concat(newSaveFile, "")
+
+	system.saveFile(newSaveFile, dataCategory)
+
+	tfm.exec.chatMessage("<bv>[Module]</bv> <n>File saved.</n>")
+
+	--log({"<vp>Saved File :</vp> ", newSaveFile})
+end
+
+isLeaderboardDataLoaded = true
 end
 
 
 function savePlayerData(playerName)
-	if mapCode then
-		local Data = playerData[playerName]
+if mapCode then
+	local Data = playerData[playerName]
 
-		Data.records[mapCode] = leaderboardPlayerList[playerName]
+	Data.records[mapCode] = leaderboardPlayerList[playerName]
 
-		local rawRecords, c = {}, 0
+	local rawRecords, c = {}, 0
 
-		for i, v in next, Data.records do
-			c = c + 1
-			rawRecords[c] = "@"..i..";"..v
-		end
-
-		system.savePlayerData(playerName, table.concat(rawRecords, ""))
-
-		tfm.exec.chatMessage("<bv>Saving personal record...</bv> ("..formatPlayerName(playerName)..", "..formatTime(leaderboardPlayerList[playerName])..")")
-	else
-		tfm.exec.chatMessage("<r>Can't save playerData</r> : Map is invalid ("..playerName..")")
+	for i, v in next, Data.records do
+		c = c + 1
+		rawRecords[c] = "@"..i..";"..v
 	end
+
+	system.savePlayerData(playerName, table.concat(rawRecords, ""))
+
+	tfm.exec.chatMessage("<bv>Saving personal record...</bv> ("..formatPlayerName(playerName)..", "..formatTime(leaderboardPlayerList[playerName])..")")
+else
+	tfm.exec.chatMessage("<r>Can't save playerData</r> : Map is invalid ("..playerName..")")
 end
-
-
---[[function loadPlayerData(playerData)
-	system.loadPlayerData(playerName)
-end--]]
+end
 
 
 function eventPlayerDataLoaded(playerName, loadedPlayerData)
-	local Data = playerData[playerName]
+local Data = playerData[playerName]
 
-	for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
-		Data.records[tonumber(mapCode)] = tonumber(time);
-	end
+for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
+	Data.records[tonumber(mapCode)] = tonumber(time);
 end
-
-
+end
 
 
 --[[ / --]]
 
+
 --[[ Commands --event]]
+
 
 function eventChatCommand(playerName, command)
 	local args, c = {}, 1
@@ -408,6 +407,7 @@ function eventChatCommand(playerName, command)
 	end
 end
 
+
 --[[ Callbacks --]]
 
 function eventTextAreaCallback(textAreaId, playerName, eventName)
@@ -429,6 +429,7 @@ function eventTextAreaCallback(textAreaId, playerName, eventName)
 end
 
 --[[ / --]]
+
 
 --[[ Particles --]]
 
@@ -455,7 +456,6 @@ end
 --[[ --]]
 
 --[[ --]]
-
 
 function formatTime(t)
 	local s = t%100
@@ -525,13 +525,17 @@ function updateHelpPopup(playerName, show)
 	end
 end
 
+
+
 --[[ --]]
 
 
 function leaderboardAdd(playerName, time)
-	--if (not leaderboardPlayerList[playerName]) or (time < leaderboardPlayerList[playerName]) then	
+	--if (not leaderboardPlayerList[playerName]) or (time < leaderboardPlayerList[playerName]) then
 
-	isSaving = not not playerData[playerName]
+	
+	isSaving = (not not playerData[playerName]) and (not playerName:find("<b>"))
+	log({isSaving, not playerName:find("<b>"), playerName})
 
 	-- Add player on first completion
 	if not leaderboardPlayerList[playerName] then
@@ -568,7 +572,7 @@ function leaderboardUpdateUi(playerName, show)
 
 			for i, v in next, leaderboard do
 				local displayPlayerName = formatPlayerName(v[1], playerName)
-				
+
 				if i > 1 then
 					out[i] = "<v>0"..i.."</v><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
 				else
@@ -584,7 +588,7 @@ function leaderboardUpdateUi(playerName, show)
 end
 
 
-function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn) 
+function eventPlayerWon(playerName, timeElapsed, timeElapsedSinceRespawn)
 	local Data = playerData[playerName]
 
 	tfm.exec.respawnPlayer(playerName)
@@ -628,12 +632,12 @@ end
 --[[ --]]
 
 function eventNewGame()
-	if mapCode and (leaderboard ~= {}) then	
+	if mapCode and (leaderboard ~= {}) then
 		mapsData[mapCode] = table.copy(leaderboard)
 	end
 
 	mapCode = tfm.get.room.xmlMapInfo.mapCode
-	
+
 	leaderboard = {}
 	leaderboardPlayerList = {}
 
@@ -700,5 +704,5 @@ do
 		pickCategoryText[i] = "<a href='event:load_"..v.."'>"..v.."</a>"
 	end
 
-	ui.addTextArea(3, "<b>Choose leaderboard data to load</b>\n<n>"..table.concat(pickCategoryText, "\n").."</n>", admin, 300, 100, 200, 0, 0, 0, 0, true)
+	ui.addTextArea(3, "<b>Choose leaderboard data to load</b>\n<n>"..table.concat(pickCategoryText, "\n").."</n>", roomCreator, 300, 100, 200, 0, 0, 0, 0, true)
 end

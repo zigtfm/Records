@@ -1,4 +1,4 @@
-todo:
+todo
 
 !!! ( why it excists )
 bugs
@@ -10,6 +10,7 @@ bugs
 
 ! ( next )
 personal records cleanup
+	remove P record if theres WR from the same player
 add !lock
 add !pw
 
