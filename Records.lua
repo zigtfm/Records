@@ -265,20 +265,21 @@ function loadMapLeaderboard()
 	-- mapsData
 	--tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!")
 
-	-- for i, v in next, mapsData[mapCode] do
-	-- 	--if not playerData[v[1]].records[mapCode] then
-	-- 		leaderboardAdd(v[1], v[2])
-	-- 	--end
-	-- end
+	for i, v in next, mapsData[mapCode] do
+		--if not playerData[v[1]].records[mapCode] then
+			leaderboardAdd(v[1], v[2])
+		--end
+	end
 
 	local wrString = mapsData[mapCode][1]
-	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
+	if wrString then
+		tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
+	end
 
 	-- playerData
 
 	for playerName, Data in next, playerData do
 		if Data.records[mapCode] then
-			--leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
 			leaderboardAdd(playerName, Data.records[mapCode])
 		end
 	end
@@ -589,7 +590,6 @@ function updateUi(playerName)
 		local show = playerData[playerName].showUi
 
 		leaderboardUpdateUi(playerName, show)
-		-- updateHelpUi(playerName, show)
 	else
 		for playerName, Data in next, playerData do
 			leaderboardUpdateUi(playerName, Data.showUi)
