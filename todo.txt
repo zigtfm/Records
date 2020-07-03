@@ -14,7 +14,10 @@ add !pw
 ~ ( maybe later )
 personal records commands
 personal records ui
+loading script in tribe support
+translations
 
 ? ( possible ideas )
+new records history
 add time offset formatting (+0.01s or -0.01s etc) in event win and in records table as possible setting
 add practice mode with checkpoints, fast respawn, teleport etc.
