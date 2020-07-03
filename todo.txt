@@ -1,8 +1,7 @@
 todo
 
 !!! ( why it excists )
-bugs
-	update records on new map if theres no record
+-
 
 ! ( next )
 personal records cleanup
