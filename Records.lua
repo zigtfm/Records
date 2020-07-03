@@ -100,6 +100,7 @@ function eventNewPlayer(playerName)
 		--timeSinceRespawnEvent = os.time(),
 
 		records = {},
+		personalDataLength = 0
 	}
 
 	system.loadPlayerData(playerName)
@@ -384,6 +385,8 @@ end
 function eventPlayerDataLoaded(playerName, loadedPlayerData)
 	local Data = playerData[playerName]
 
+	Data.personalDataLength = #loadedPlayerData
+
 	for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
 		Data.records[tonumber(mapCode)] = tonumber(time);
 	end
@@ -424,6 +427,8 @@ function eventChatCommand(playerName, command)
 	elseif args[1] == "table" then
 		tfm.exec.chatMessage("<bv>[Module]</bv> <vp>docs.google.com/spreadsheets/d/1l3D-tmUAgwqNPjR3qa1rKqNkNYImPLC3dhgHUD3gLjo</vp>")
 
+	elseif args[1] == "file" then
+		tfm.exec.chatMessage("Your file is <b>"..Data.personalDataLength.."</b> / <b>2000</b> length .", playerName)
 
 	elseif args[1] == "monitor" then
 		if args[2] then
