@@ -170,6 +170,8 @@ local filePerm = {
 		7491313,
 		7493382,
 		7493383,
+		7748255, -- newmap
+
 		--6998469,  -- Mouse
 		7014985, 
 		7169833,  -- Paranoia 
@@ -665,9 +667,9 @@ function leaderboardUpdateUi(playerName, show)
 	-- log({"<rose>! Leaderboard !</rose>"})
 	-- log(leaderboard)
 	if show then
-		ui.addTextArea(0, "No records", playerName, 5, 25, 0, 0, 0x2C0C01, 0x2C0C01, 0.9, true)
-
-		if (#leaderboard ~= 0) then
+		if #leaderboard == 0 then
+			ui.addTextArea(0, "No records", playerName, 5, 25, 0, 0, 0x2C0C01, 0x2C0C01, 0.9, true)
+		else
 			local out = {}
 
 			for i, v in next, leaderboard do
@@ -681,7 +683,7 @@ function leaderboardUpdateUi(playerName, show)
 				end
 			end
 
-			ui.updateTextArea(0, table.concat(out, "\n"), playerName)
+			ui.addTextArea(0, table.concat(out, "\n"), playerName, 5, 25, 0, 0, 0x2C0C01, 0x2C0C01, 0.9, true)
 		end
 	else
 		ui.removeTextArea(0, playerName)
