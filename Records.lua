@@ -12,6 +12,8 @@ local roomCreator = tfm.get.room.name:match("test%d+(.-#%d%d%d%d)")
 
 --[[ Debug --]]
 
+local publicLog = false
+
 function log(args)
 	local matches, c = {}, 1
 	do
@@ -28,8 +30,11 @@ function log(args)
 		args = _args
 	end
 
-
-	print("<n>"..table.concat(matches, "</n> <g>-></g> <n>").."\n\t"..table.concat(args, "\n\t").."</n>")
+	if publicLog then
+		tfm.exec.chatMessage("<n>"..table.concat(matches, "</n> <g>-></g> <n>").."\n\t"..table.concat(args, "\n\t").."</n>")
+	else
+		print("<n>"..table.concat(matches, "</n> <g>-></g> <n>").."\n\t"..table.concat(args, "\n\t").."</n>")
+	end
 end
 
 --[[ / --]]
@@ -132,7 +137,89 @@ local fileCategory = {
 local filePerm = {
 	[1] = '#17',
 	[2] = '#3',
-	[3] = '@7731822',
+	[3] = {
+		--P3
+		7731822,
+		7712136,
+		7703641,
+		7628880,
+		7620817,
+		7628880,
+		7521631,
+		7517608,
+		7519008,
+		7524205,
+		7579414,
+		7595412,
+		7513616,
+		7515925,
+		7529248,
+		7504145,
+		7504618,
+		7505713,
+		7510353,
+		6998403,
+		7417002,
+		7417098,
+		7424172,
+		7435421,
+		7439611,
+		7450840,
+		7455104,
+		7468427,
+		7491313,
+		7493382,
+		7493383,
+		--6998469,  -- Mouse
+		7014985, 
+		7169833,  -- Paranoia 
+		7192320, 
+		7193656, 
+		7231919, 
+	
+		-- P17
+		7703668,
+		7560511,
+		7624333,
+		7013874,
+		7019745,
+		7040835,
+		7208679,
+		7212213,
+		7227865,
+		7228843,
+		7230890,
+		7280387,
+		7281994,
+		--7337333,
+		7337338,
+		7383729,
+		7386241,
+		7386915,
+		7388279,
+		7389832,
+		7400100,
+		7400909,
+		7401800,
+		7417137,
+		7417666,
+		7437135,
+		7439193,
+		7450901,
+		7456631,
+		-- 7523819 broken sc
+		-- 7558648 bad map
+	
+		-- P4
+		7561656,
+	
+		-- misc maps
+		7722234,
+	
+		-- hard p3
+		7511850,
+		7518284,
+	},
 }
 
 --[[ / --]]
@@ -142,62 +229,62 @@ local filePerm = {
 
 -- pack leaderboard 1st place data -> save after loading the file (in eventFileLoaded)
 function saveLeaderboard()
-if (not leaderboard) or (leaderboard == {}) then
-	log({"<r>Can't save</r> : Leaderboard is empty!"})
-	return
-elseif not mapCode then
-	log({"<r>Can't save</r> : mapCode = nil!"})
-	return
-end
+	if (not leaderboard) or (leaderboard == {}) then
+		log({"<r>Can't save</r> : Leaderboard is empty!"})
+		return
+	elseif not mapCode then
+		log({"<r>Can't save</r> : mapCode = nil!"})
+		return
+	end
 
-local output = "@"..mapCode..";"..leaderboard[1][1]..leaderboard[1][2]..";"
+	local output = "@"..mapCode..";"..leaderboard[1][1]..leaderboard[1][2]..";"
 
-fileToSave = output
-isSavingFile = true
+	fileToSave = output
+	isSavingFile = true
 
-loadLeaderboard(dataCategory)
+	loadLeaderboard(dataCategory)
 end
 
 -- load chosen file
 function loadLeaderboard(fileNumber)
---log({"Leaderboard load", fileNumber.." - "..fileCategory[fileNumber]})
+	--log({"Leaderboard load", fileNumber.." - "..fileCategory[fileNumber]})
 
-system.loadFile(fileNumber)
+	system.loadFile(fileNumber)
 end
 
 -- take data from mapsData and fill the leaderboard
 -- take data from playerData[].records for the personal records
 function loadMapLeaderboard()
-if not mapCode then
-	log({"<r>mapCode = nil!</r>"})
-	return
-elseif not mapsData[mapCode] then
-	tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." data is empty!</n>")
-	return
-end
-
--- mapsData
-
-tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!")
-
-for i, v in next, mapsData[mapCode] do
-	leaderboardAdd("<j><b>WR</b></j> "..v[1], v[2])
-end
-
-local wrString = mapsData[mapCode][1]
-
-tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
-
-
--- playerData
-
-for playerName, Data in next, playerData do
-	if Data.records[mapCode] then
-		leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
+	if not mapCode then
+		log({"<r>mapCode = nil!</r>"})
+		return
+	elseif not mapsData[mapCode] then
+		tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.." data is empty!</n>")
+		return
 	end
-end
 
-updateUi()
+	-- mapsData
+	--tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!")
+
+	for i, v in next, mapsData[mapCode] do
+		--if not playerData[v[1]].records[mapCode] then
+			leaderboardAdd(v[1], v[2])
+		--end
+	end
+
+	local wrString = mapsData[mapCode][1]
+	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
+
+	-- playerData
+
+	for playerName, Data in next, playerData do
+		if Data.records[mapCode] then
+			--leaderboardAdd("<bv><b>P</b></bv> "..playerName, Data.records[mapCode])
+			leaderboardAdd(playerName, Data.records[mapCode])
+		end
+	end
+
+	updateUi()
 end
 
 -- @mapcode;playername#tagtime;
@@ -273,33 +360,33 @@ end
 
 
 function savePlayerData(playerName)
-if mapCode then
-	local Data = playerData[playerName]
+	if mapCode then
+		local Data = playerData[playerName]
 
-	Data.records[mapCode] = leaderboardPlayerList[playerName]
+		Data.records[mapCode] = leaderboardPlayerList[playerName]
 
-	local rawRecords, c = {}, 0
+		local rawRecords, c = {}, 0
 
-	for i, v in next, Data.records do
-		c = c + 1
-		rawRecords[c] = "@"..i..";"..v
+		for i, v in next, Data.records do
+			c = c + 1
+			rawRecords[c] = "@"..i..";"..v
+		end
+
+		system.savePlayerData(playerName, table.concat(rawRecords, ""))
+
+		--tfm.exec.chatMessage("<bv>Saving personal record...</bv> ("..formatPlayerName(playerName)..", "..formatTime(leaderboardPlayerList[playerName])..")")
+	else
+		tfm.exec.chatMessage("<r>Can't save playerData</r> : Map is invalid ("..playerName..")")
 	end
-
-	system.savePlayerData(playerName, table.concat(rawRecords, ""))
-
-	tfm.exec.chatMessage("<bv>Saving personal record...</bv> ("..formatPlayerName(playerName)..", "..formatTime(leaderboardPlayerList[playerName])..")")
-else
-	tfm.exec.chatMessage("<r>Can't save playerData</r> : Map is invalid ("..playerName..")")
-end
 end
 
 
 function eventPlayerDataLoaded(playerName, loadedPlayerData)
-local Data = playerData[playerName]
+	local Data = playerData[playerName]
 
-for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
-	Data.records[tonumber(mapCode)] = tonumber(time);
-end
+	for mapCode, time in loadedPlayerData:gmatch("@(.-);(%d+)") do
+		Data.records[tonumber(mapCode)] = tonumber(time);
+	end
 end
 
 
@@ -361,7 +448,13 @@ function eventChatCommand(playerName, command)
 	local isCreator = playerName == roomCreator
 	if isCreator or Data.admin then
 		if args[1] == "map" then
-			tfm.exec.newGame(args[2] or filePerm[dataCategory])
+			local newMap = args[2] or filePerm[dataCategory]
+
+			if type(newMap) == "table" then
+				tfm.exec.newGame(newMap[math.random(#newMap)])
+			else
+				tfm.exec.newGame(newMap)
+			end
 		end
 		if isCreator then
 			if args[1] == "admin" then
@@ -514,7 +607,7 @@ function updateHelpPopup(playerName, show)
 		ui.addTextArea(105, "", playerName, 225, 255, 210, 110, 0x4d1e0e, 0x2c0c01, 0.5, true)
 		ui.addTextArea(106, "\n<v>!admin</v>\n<v>!unadmin</v>\n<v>!map</v>", playerName, 240, 270, 70, 100, 0x000000, 0x000000, 0, true)
 		ui.addTextArea(107, "\nName#0000\nName#0000\n[@123456 / #17]", playerName, 310, 270, 130, 100, 0x000000, 0x000000, 0, true)
-		ui.addTextArea(108, "\n<bv><b>P<b></bv> means best personal record.", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
+		ui.addTextArea(108, "", playerName, 450, 60, 140, 180, 0x2c0c01, 0x000000, 0.5, true)
 		ui.addTextArea(110, "\n<bv><b>#wr</b></bv>\nmade by Zigwin<g><font size='9'>#0000</font></g>\n\n<a href='event:link_translate'>Translate</a>\n<a href='event:link_issue'>Bug & Suggestion</a>\n", playerName, 450, 250, 140, 120, 0x2c0c01, 0x000000, 0.5, true)
 		ui.addTextArea(111, "\n<p align='center'><r>Admins</r></p>", playerName, 220, 250, 220, 30, 0x000000, 0x000000, 0, true)
 		ui.addTextArea(109, "<a href='event:close_help'><p align='center'>\nClose</p></a>", playerName, 220, 330, 220, 30, 0x000000, 0x000000, 0, true)
@@ -533,9 +626,7 @@ end
 function leaderboardAdd(playerName, time)
 	--if (not leaderboardPlayerList[playerName]) or (time < leaderboardPlayerList[playerName]) then
 
-	
-	isSaving = (not not playerData[playerName]) and (not playerName:find("<b>"))
-	log({isSaving, not playerName:find("<b>"), playerName})
+	isSaving = (not not playerData[playerName]) --and (not playerName:find("<b>"))
 
 	-- Add player on first completion
 	if not leaderboardPlayerList[playerName] then
@@ -543,6 +634,7 @@ function leaderboardAdd(playerName, time)
 
 		if isSaving then savePlayerData(playerName) end
 	end
+
 	-- Check if new time is better
 	if time < leaderboardPlayerList[playerName] then
 		leaderboardPlayerList[playerName] = time
@@ -572,9 +664,10 @@ function leaderboardUpdateUi(playerName, show)
 
 			for i, v in next, leaderboard do
 				local displayPlayerName = formatPlayerName(v[1], playerName)
+				local pos = (i < 10 and "0"..i) or i
 
 				if i > 1 then
-					out[i] = "<v>0"..i.."</v><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
+					out[i] = "<v>"..pos.."</v><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
 				else
 					out[i] = "<font color='#EBB741'>01</font><g>-"..displayPlayerName.."</g> <v>"..formatTime(v[2]).."</v>"
 				end
@@ -632,6 +725,9 @@ end
 --[[ --]]
 
 function eventNewGame()
+	-- the same map has the same data so skip if bec idk how to fix it else it just crashed fk this too hard
+	if (mapCode) and (mapCode == tfm.get.room.xmlMapInfo.mapCode) then return end
+
 	if mapCode and (leaderboard ~= {}) then
 		mapsData[mapCode] = table.copy(leaderboard)
 	end
@@ -650,6 +746,7 @@ function eventNewGame()
 	end
 end
 
+
 function eventKeyboard(playerName, keyCode, down, xPlayerPosition, yPlayerPosition)
 	if keyCode == 46 then -- Del
 		tfm.exec.killPlayer(playerName)
@@ -660,6 +757,7 @@ function eventKeyboard(playerName, keyCode, down, xPlayerPosition, yPlayerPositi
 		updateUi(playerName)
 	end
 end
+
 
 function eventLoop(elapsedTime, remainingTime)
 	for playerName, Data in next, playerData do
@@ -684,6 +782,7 @@ function eventLoop(elapsedTime, remainingTime)
 		end
 	end
 end
+
 
 ui.addTextArea(2, "<font color='#000000'>60s</font>", nil, 6, 381, 0, 0, 1, 1, 0, true)
 ui.addTextArea(1, "<rose>60s<rose>", nil, 5, 380, 0, 0, 1, 1, 0, true)
