@@ -6,7 +6,6 @@ do
 end
 --]]
 
-
 local owner = "Zigwin#0000"
 local roomCreator = tfm.get.room.name:match("test%d+(.-#%d%d%d%d)")
 
@@ -266,11 +265,11 @@ function loadMapLeaderboard()
 	-- mapsData
 	--tfm.exec.chatMessage("<bv>[Module]</bv> <n>@"..mapCode.."</n> leaderboard loaded!")
 
-	for i, v in next, mapsData[mapCode] do
-		--if not playerData[v[1]].records[mapCode] then
-			leaderboardAdd(v[1], v[2])
-		--end
-	end
+	-- for i, v in next, mapsData[mapCode] do
+	-- 	--if not playerData[v[1]].records[mapCode] then
+	-- 		leaderboardAdd(v[1], v[2])
+	-- 	--end
+	-- end
 
 	local wrString = mapsData[mapCode][1]
 	tfm.exec.chatMessage("<bv>[Module]</bv> World record : "..formatPlayerName(tostring(wrString[1])).." "..formatTime(tostring(wrString[2])))
@@ -457,7 +456,22 @@ function eventChatCommand(playerName, command)
 			end
 		end
 		if isCreator then
-			if args[1] == "admin" then
+			if args[1] == "pw" then
+				if args[2] then
+					tfm.exec.chatMessage("<vp>•</vp> Password <b>"..args[2].."</b> set.", playerName)
+					tfm.exec.setRoomPassword(args[2])
+				else
+					tfm.exec.chatMessage("<r>•</r> Password removed.", playerName)
+					tfm.exec.setRoomPassword(nil)
+				end
+
+			elseif args[1] == "lock" then
+				if tonumber(args[2]) then
+					tfm.exec.chatMessage("<vp>•</vp> Max <b>"..args[2].."</b> players set.", playerName)
+					tfm.exec.setRoomMaxPlayers(tonumber(args[2]))
+				end
+			
+			elseif args[1] == "admin" then
 				local argName = args[2]
 
 				if playerData[argName] then
@@ -490,8 +504,7 @@ function eventChatCommand(playerName, command)
 		loadMapLeaderboard()
 
 	elseif args[1] == "win" then
-		tfm.exec.giveCheese(args[2])
-		tfm.exec.playerVictory(args[2])
+		leaderboardAdd(args[2], tonumber(args[3]))
 
 	elseif args[1] == "rawdata" then
 		if args[2] then
@@ -551,8 +564,14 @@ end
 --[[ --]]
 
 function formatTime(t)
-	local s = t%100
-	return tostring((t-s)/100).."."..tostring(s).."s"
+    local s = t%100
+    if s == 0 then
+        return tostring((t-s)/100).."s"
+    elseif s < 10 then
+        return tostring((t-s)/100)..".0"..tostring(s).."s"
+    else
+        return tostring((t-s)/100).."."..tostring(s).."s"
+    end
 end
 
 
@@ -573,26 +592,10 @@ function updateUi(playerName)
 		-- updateHelpUi(playerName, show)
 	else
 		for playerName, Data in next, playerData do
-			if Data.showUi then
-				leaderboardUpdateUi(playerName, true)
-				-- updateHelpUi(playerName, true)
-			end
+			leaderboardUpdateUi(playerName, Data.showUi)
 		end
 	end
 end
-
-
--- function updateHelpUi(playerName, show)
--- 	if show then
--- 		local text = [[
--- <v>!monitor</v> [on / off]
--- <v>!hideTags</v> [on / off]
--- ]]
--- 		ui.addTextArea(5, text, playerName, 600, 160, 195, 115, 0, 0, 0, true)
--- 	else
--- 		ui.removeTextArea(5, playerName)
--- 	end
--- end
 
 
 function updateHelpPopup(playerName, show)

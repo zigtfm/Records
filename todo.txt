@@ -2,14 +2,10 @@ todo
 
 !!! ( why it excists )
 bugs
-	fix wrong leaderboard time recording (possible wrong >< checking)
 	-- update records on new map
 
 ! ( next )
 personal records cleanup
-	remove P record if theres WR from the same player
-add !lock
-add !pw
 
 ~ ( maybe later )
 personal records commands
