@@ -462,7 +462,7 @@ function eventChatCommand(playerName, command)
 					tfm.exec.setRoomPassword(args[2])
 				else
 					tfm.exec.chatMessage("<r>•</r> Password removed.", playerName)
-					tfm.exec.setRoomPassword(nil)
+					tfm.exec.setRoomPassword("")
 				end
 
 			elseif args[1] == "lock" then
